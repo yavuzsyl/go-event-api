@@ -3,13 +3,13 @@ package models
 import "time"
 
 type Event struct {
-	ID          int64     `json:"id"`
-	Title       string    `json:"title"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Location    string    `json:"location"`
-	DateTime    time.Time `json:"date_time"`
-	UserID      int64     `json:"user_id"`
+	ID          int64
+	Title       string
+	Name        string    `binding:"required"`
+	Description string    `binding:"required"`
+	Location    string    `binding:"required"`
+	DateTime    time.Time `binding:"required"`
+	UserID      int64
 }
 
 var events = []Event{}
