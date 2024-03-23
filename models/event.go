@@ -21,10 +21,10 @@ func (e *Event) SetId(id int64) {
 
 func (e Event) Save() error {
 	//later: add it to database
-	query := `INSERT INTO events(name, description, location, dateTime, user_id) 
+	command := `INSERT INTO events(name, description, location, dateTime, user_id) 
 	VALUES(?,?,?,?,?)`
 
-	stmt, err := db.DB.Prepare(query)
+	stmt, err := db.DB.Prepare(command)
 
 	if err != nil {
 		return err
@@ -40,6 +40,27 @@ func (e Event) Save() error {
 	id, err := result.LastInsertId()
 	e.SetId(id)
 	return err
+}
+
+func (e Event) Update() error {
+	command := `
+	UPDATE events 
+	SET name = ?, description = ?, location = ?, dateTime = ?
+	WHERE id= ? 
+	`
+	stmt, err := db.DB.Prepare(command)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(&e.Name, &e.Description, &e.Location, &e.DateTime, &e.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetAllEvents() ([]Event, error) {
