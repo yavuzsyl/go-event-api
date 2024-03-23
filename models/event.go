@@ -64,7 +64,7 @@ func (e Event) Update() error {
 }
 
 func (e Event) Delete() error {
-	deleteCommand := `DELETE FROM event WHERE id = ?`
+	deleteCommand := `DELETE FROM events WHERE id = ?`
 
 	stmt, err := db.DB.Prepare(deleteCommand)
 	if err != nil {
