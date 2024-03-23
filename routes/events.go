@@ -19,14 +19,9 @@ func getEvents(context *gin.Context) {
 }
 
 func getEvent(context *gin.Context) {
-	id, err := strconv.ParseInt(context.Param("id"), 10, 64)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse id"})
-	}
-
-	event, err := models.GetEventById(id)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "could not find event with given id"})
+	event, shouldReturn := fetchEventByRequest(context)
+	if shouldReturn {
+		return
 	}
 
 	context.JSON(http.StatusOK, event)
@@ -54,25 +49,20 @@ func createEvent(context *gin.Context) {
 }
 
 func updateEvent(context *gin.Context) {
-	id, err := strconv.ParseInt(context.Param("id"), 10, 64)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse id"})
-	}
-
-	_, err = models.GetEventById(id)
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "could not find event with given id"})
+	event, shouldReturn := fetchEventByRequest(context)
+	if shouldReturn {
+		return
 	}
 
 	var updatedEvent models.Event
-	err = context.ShouldBindJSON(&updatedEvent)
+	err := context.ShouldBindJSON(&updatedEvent)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse event update request"})
 		return
 	}
 
-	updatedEvent.ID = id
+	updatedEvent.ID = event.ID
 	err = updatedEvent.Update()
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "could not update event"})
@@ -80,4 +70,35 @@ func updateEvent(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, gin.H{"message": "event updated successfully"})
+}
+
+func deleteEvent(context *gin.Context) {
+	event, shouldReturn := fetchEventByRequest(context)
+	if shouldReturn {
+		return
+	}
+
+	err := event.Delete()
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "could not delete event"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "event deleted successfully"})
+}
+
+// COMMON LOGIC
+func fetchEventByRequest(context *gin.Context) (*models.Event, bool) {
+	id, err := strconv.ParseInt(context.Param("id"), 10, 64)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse id"})
+		return nil, true
+	}
+
+	event, err := models.GetEventById(id)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "could not find event with given id"})
+		return nil, true
+	}
+	return event, false
 }
