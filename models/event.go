@@ -19,7 +19,7 @@ func (e *Event) SetId(id int64) {
 	e.ID = id
 }
 
-func (e Event) Save() error {
+func (e *Event) Save() error {
 	//later: add it to database
 	command := `INSERT INTO events(name, description, location, dateTime, user_id) 
 	VALUES(?,?,?,?,?)`
