@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"eventapi/db"
 	"eventapi/utils"
 )
@@ -37,4 +38,23 @@ func (u User) Save() error {
 	userId, err := result.LastInsertId()
 	u.SetId(userId)
 	return err
+}
+
+func (u User) ValidateCredentials() error {
+	query := `SELECT password FROM users WHERE email = ?`
+
+	row := db.DB.QueryRow(query, u.Email)
+
+	var hashedPassword string
+	err := row.Scan(&hashedPassword)
+	if err != nil {
+		return err
+	}
+
+	isPasswordValid := utils.ComparePasswords(u.Password, hashedPassword)
+	if !isPasswordValid {
+		return errors.New("invalid password")
+	}
+
+	return nil
 }
