@@ -30,7 +30,7 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-	err := ValidateToken(context)
+	userId, err := ValidateToken(context)
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
@@ -44,7 +44,7 @@ func createEvent(context *gin.Context) {
 		return
 	}
 
-	event.UserID = 1
+	event.UserID = userId
 
 	err = event.Save()
 	if err != nil {
@@ -56,7 +56,7 @@ func createEvent(context *gin.Context) {
 }
 
 func updateEvent(context *gin.Context) {
-	err := ValidateToken(context)
+	_, err := ValidateToken(context)
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
@@ -86,7 +86,7 @@ func updateEvent(context *gin.Context) {
 }
 
 func deleteEvent(context *gin.Context) {
-	err := ValidateToken(context)
+	_, err := ValidateToken(context)
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
@@ -122,16 +122,16 @@ func fetchEventByRequest(context *gin.Context) (*models.Event, bool) {
 	return event, false
 }
 
-func ValidateToken(context *gin.Context) error {
+func ValidateToken(context *gin.Context) (int64, error) {
 	token := context.Request.Header.Get("Authorization")
 	if token == "" {
-		return errors.New("not authorized")
+		return 0, errors.New("not authorized")
 	}
 
-	err := utils.VerifyToken(token)
+	userId, err := utils.VerifyToken(token)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return userId, nil
 }
