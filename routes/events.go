@@ -1,9 +1,7 @@
 package routes
 
 import (
-	"errors"
 	"eventapi/models"
-	"eventapi/utils"
 	"net/http"
 	"strconv"
 
@@ -30,20 +28,15 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-	userId, err := ValidateToken(context)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
+	err := context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse event"})
 		return
 	}
 
+	userId := context.GetInt64("userId")
 	event.UserID = userId
 
 	err = event.Save()
@@ -56,19 +49,13 @@ func createEvent(context *gin.Context) {
 }
 
 func updateEvent(context *gin.Context) {
-	_, err := ValidateToken(context)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-
 	event, shouldReturn := fetchEventByRequest(context)
 	if shouldReturn {
 		return
 	}
 
 	var updatedEvent models.Event
-	err = context.ShouldBindJSON(&updatedEvent)
+	err := context.ShouldBindJSON(&updatedEvent)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse event update request"})
@@ -86,18 +73,12 @@ func updateEvent(context *gin.Context) {
 }
 
 func deleteEvent(context *gin.Context) {
-	_, err := ValidateToken(context)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-
 	event, shouldReturn := fetchEventByRequest(context)
 	if shouldReturn {
 		return
 	}
 
-	err = event.Delete()
+	err := event.Delete()
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "could not delete event"})
 		return
@@ -120,18 +101,4 @@ func fetchEventByRequest(context *gin.Context) (*models.Event, bool) {
 		return nil, true
 	}
 	return event, false
-}
-
-func ValidateToken(context *gin.Context) (int64, error) {
-	token := context.Request.Header.Get("Authorization")
-	if token == "" {
-		return 0, errors.New("not authorized")
-	}
-
-	userId, err := utils.VerifyToken(token)
-	if err != nil {
-		return 0, err
-	}
-
-	return userId, nil
 }
