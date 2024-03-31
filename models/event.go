@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"eventapi/db"
 	"time"
 )
@@ -56,11 +57,8 @@ func (e Event) Update() error {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(&e.Name, &e.Description, &e.Location, &e.DateTime, &e.ID)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (e Event) Delete() error {
@@ -74,11 +72,8 @@ func (e Event) Delete() error {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(e.ID)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func GetAllEvents() ([]Event, error) {
@@ -119,4 +114,40 @@ func GetEventById(id int64) (*Event, error) {
 	}
 
 	return &event, nil
+}
+
+func (e Event) Register(userId int64) error {
+	insertCommand := "INSERT INTO registrations(user_id, event_id) VALUES(?, ?)"
+
+	stmnt, err := db.DB.Prepare(insertCommand)
+	if err != nil {
+		return err
+	}
+
+	defer stmnt.Close()
+
+	_, err = stmnt.Exec(userId, e.ID)
+
+	return err
+}
+
+func (e Event) CancelRegistration(userId int64) error {
+	deleteCommand := "DELETE FROM registrations where user_id = ? and event_id = ?"
+	stmnt, err := db.DB.Prepare(deleteCommand)
+	if err != nil {
+		return err
+	}
+
+	defer stmnt.Close()
+
+	res, err := stmnt.Exec(userId, e.ID)
+	if err != nil {
+		return err
+	}
+
+	if aff, err := res.RowsAffected(); err != nil || aff <= 0 {
+		return errors.New("error occured")
+	}
+
+	return nil
 }
