@@ -9,9 +9,9 @@ import (
 func RegisterRoutes(server *gin.Engine) {
 
 	authorizedEventsGroup := server.Group("/")
+	server.GET("/events", getEvents)
+	server.GET("/events/:id", getEvent)
 	authorizedEventsGroup.Use(middlewares.Authenticate)
-	authorizedEventsGroup.GET("/events", getEvents)
-	authorizedEventsGroup.GET("/events/:id", getEvent)
 	authorizedEventsGroup.POST("/events", createEvent)
 	authorizedEventsGroup.PUT("/events/:id", updateEvent)
 	authorizedEventsGroup.DELETE("/events/:id", deleteEvent)

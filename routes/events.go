@@ -88,17 +88,24 @@ func deleteEvent(context *gin.Context) {
 }
 
 // COMMON LOGIC
-func fetchEventByRequest(context *gin.Context) (*models.Event, bool) {
+func fetchEventByRequest(context *gin.Context) (event *models.Event, shouldReturn bool) {
 	id, err := strconv.ParseInt(context.Param("id"), 10, 64)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse id"})
 		return nil, true
 	}
 
-	event, err := models.GetEventById(id)
+	event, err = models.GetEventById(id)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "could not find event with given id"})
 		return nil, true
 	}
+
+	userId := context.GetInt64("userId")
+	if event.UserID != userId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		return nil, true
+	}
+
 	return event, false
 }
